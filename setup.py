@@ -17,6 +17,5 @@ setuptools.setup(
                       "pandas", "spacy", "sklearn"],
     url="https://github.com/davidjurgens/support",
     include_package_data=True,
-    packages=setuptools.find_packages()
-
+    packages=setuptools.find_packages(where='src')
 )

@@ -38,3 +38,8 @@ classifier.
 The next step is to package the code up as a module to allow easier
 classification.  Pull requests welcome.
 
+## Change log and detected issues
+
+- Modified relative paths so that they are compatible to running from `support/` as working directory.
+- Added a wrapper function replacing `trie_search`, since its interaction with `marisa-trie` is now deprecated.
+- Added handling for empty token case in feature extraction functions in `social_features.py`

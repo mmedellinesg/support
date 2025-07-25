@@ -2,6 +2,7 @@ from nltk.parse.corenlp import CoreNLPDependencyParser
 from textblob import TextBlob
 import re
 import string
+import os
 
 import nltk
 from nltk.corpus import stopwords
@@ -15,20 +16,24 @@ import gensim
 from gensim import utils
 import numpy as np
 
-import trie_search
+
 from unidecode import unidecode
 
 from empath import Empath
 
-from politeness import get_politeness_indicators
-from support import get_support_indicators
+import sys
+sys.path.append('./src')
+from models.politeness import get_politeness_indicators
+from models.support import get_support_indicators
+
+from trie_search_wrapper import TrieSearch
 
 from nltk.tokenize.stanford import StanfordTokenizer
 
 import random
 import gzip
 
-import sys
+
 
 import spacy
 
@@ -38,7 +43,7 @@ sent_detector = nltk.data.load('tokenizers/punkt/english.pickle')
 empath = Empath()
 
 
-en_nlp = spacy.load('en')
+en_nlp = spacy.load('en_core_web_lg')
 
 EN_STOPWORDS = set(stopwords.words('english'))
 
@@ -112,7 +117,7 @@ MAX_WORD_FREQS=500000
 # Use a flag here for fast loading
 if True:
     print('Loading log-transformed Google NGram counts')
-    ngram_count_file='../../resources/google-ngram-freqs.no-pos.sorted.tsv.gz'
+    ngram_count_file='./resources/google-ngram-freqs.no-pos.sorted.tsv.gz'
     with gzip.open(ngram_count_file, mode='rt') as f:
         for line_no, line in enumerate(f):
             cols = line[:-1].split('\t')
@@ -127,9 +132,9 @@ WORD2VEC = None
 # If debugging, save a few minutes by avoiding the word2vec parts of the
 # pipeline by switching this conditional to 'False' (everything else should
 # still just work)
-if False:
+if True:
     print('Loading word2vec data')
-    word2vec_file = '../../resources/GoogleNews-vectors-negative300.bin.gz'
+    word2vec_file = './resources/GoogleNews-vectors-negative300.bin.gz'
     WORD2VEC = gensim.models.KeyedVectors.load_word2vec_format(word2vec_file, binary=True)
     print('...done loading word2vec data')
 
@@ -138,7 +143,7 @@ PHRASE_FORMALITIES_TRIE = None
 if True:
     print('Loading phrase formalities')
     # This is naacl-2015-style-scores/formality/automatic/phrase-scores
-    phrase_formalities_file = '../../resources/phrase-formality-scores.tsv'
+    phrase_formalities_file = './resources/phrase-formality-scores.tsv'
     with open(phrase_formalities_file) as f:
         for line in f:
             cols = line[:-1].split('\t')
@@ -146,15 +151,15 @@ if True:
             phrase = ' ' + cols[1] + ' '
             PHRASE_FORMALITIES[phrase] = formality
 
-        PHRASE_FORMALITIES_TRIE = trie_search.TrieSearch(list(PHRASE_FORMALITIES.keys()))
+        PHRASE_FORMALITIES_TRIE = TrieSearch(list(PHRASE_FORMALITIES.keys()))
 
 
 PHRASE_CONCRETENESS = {}
 PHRASE_CONCRETENESS_TRIE = None
 if True:
     print('Loading phrase concreteness')
-    phrase_concreteness_file = '../../resources/AC_ratings_google3m_koeper_SiW.csv.gz'
-    with gzip.open(phrase_concreteness_file) as f:
+    phrase_concreteness_file = './resources/AC_ratings_google3m_koeper_SiW.csv.gz'
+    with gzip.open(phrase_concreteness_file, mode='rt', encoding='utf-8') as f:
         for line_no, line in enumerate(f):
             if line_no == 0:
                 continue
@@ -164,7 +169,7 @@ if True:
             phrase = ' ' + cols[0].replace('_', ' ') + ' '
             PHRASE_CONCRETENESS[phrase] = concreteness
 
-        PHRASE_CONCRETENESS_TRIE = trie_search.TrieSearch(list(PHRASE_CONCRETENESS.keys()))
+        PHRASE_CONCRETENESS_TRIE = TrieSearch(list(PHRASE_CONCRETENESS.keys()))
 
         
 CURSE_WORDS = set()
@@ -172,13 +177,13 @@ LIWC_RE_LEXICONS = {}
 LIWC_LEXICONS = {}
 if True:
     print('Loading lexicons')
-    curse_word_file = '../../resources/curse-words.txt'
+    curse_word_file = './resources/curse-words.txt'
     with open(curse_word_file) as f:
         for line in f:
             CURSE_WORDS.add(line[:-1])
     LEXICONS['CURSE_WORDS'] = CURSE_WORDS
 
-    base_lex_dir = '../../resources/lexicons/'
+    base_lex_dir = './resources/lexicons/'
     
     for fname in ['abstract.txt', 'concrete.txt', 'negative.txt', 'positive.txt', 'swearWords.txt']:
         lex_name = fname.split('.')[0]
@@ -223,7 +228,7 @@ if True:
         print('LIWC not seen so skipping those features; if classifying new ' + \
               'instances,\nplease be sure your classifier was trained *without* LIWC')
         empty_trie = datrie.Trie(string.ascii_lowercase)
-        LIWC_RE_LEXICONS = defaultdict(lambda: return empty_trie)
+        LIWC_RE_LEXICONS = defaultdict(lambda: empty_trie)
         # Empty set
         LIWC_LEXICONS = defaultdict(set)
                 
@@ -474,6 +479,9 @@ def get_social_features_internal(text):
 def get_sentence_features(spaced_text, tokens, pos_tags, dep_parse_triples):
 
     features = Counter()
+
+    if not tokens:
+        return features
     
     # Binary indicator for whether the sentence is all lower case
     if spaced_text == spaced_text.lower():
@@ -523,6 +531,9 @@ def get_whole_text_features(spaced_text, tokens, list_of_sentence_tokens, pos_ta
     features = Counter()
     word_features = Counter()
 
+    if not tokens:
+        return features, word_features
+
     # word_counts = Counter()
     
     num_passive = 0
@@ -543,6 +554,8 @@ def get_whole_text_features(spaced_text, tokens, list_of_sentence_tokens, pos_ta
     
     #for i, t in enumerate(tokens):
     for sent_tokens in list_of_sentence_tokens:
+        if not sent_tokens:
+            continue
         for i, t in enumerate(sent_tokens):
 
 
@@ -602,11 +615,12 @@ def get_whole_text_features(spaced_text, tokens, list_of_sentence_tokens, pos_ta
 
         # Finally, add extra bigrams and trigam feats for the beginning and end
         # of sentences
-        features['bigram:<bos>_' + sent_tokens[0]] = 1
-        features['bigram:' + sent_tokens[-1] + '_<eos>'] = 1            
+        if len(sent_tokens) >= 1:
+            features['bigram:<bos>_' + sent_tokens[0]] = 1
+            features['bigram:' + sent_tokens[-1] + '_<eos>'] = 1            
 
         # Trigrams, as 1-hot features
-        if i < len(sent_tokens) > 1:
+        if len(sent_tokens) >= 2:
             features['trigram:<bos>_' + sent_tokens[0] + '_' + sent_tokens[1]] = 1
             features['trigram:' + sent_tokens[-2] + '_' + sent_tokens[-1] + "_<eos>"] = 1
 
@@ -734,7 +748,7 @@ def get_whole_text_features(spaced_text, tokens, list_of_sentence_tokens, pos_ta
         pos_vecs = { 'N': [], 'V': [], 'J': [], 'R': [] }
         
         for i, t in enumerate(tokens):
-            if t not in WORD2VEC.vocab:
+            if t not in WORD2VEC.key_to_index:
                 continue
 
             vec = WORD2VEC[t]

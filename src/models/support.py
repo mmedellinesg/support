@@ -3,7 +3,7 @@ from collections import defaultdict
 import re
 import spacy
 
-en_nlp = spacy.load('en')
+en_nlp = spacy.load('en_core_web_sm')
 
 P_HEDGES = set([
     "think", "thought", "thinking", "almost",
@@ -99,8 +99,8 @@ COMPLIMENT = { 'like', 'appreciate', 'enjoy', 'love', 'adore', 'approve', 'dig',
 
 FIRST_PERSON_HELP_MODALS = { 'might', 'would', }
 
-pos_filename = "../../resources/liu-positive-words.txt"
-neg_filename = "../../resources/liu-negative-words.txt"
+pos_filename = "./resources/liu-positive-words.txt"
+neg_filename = "./resources/liu-negative-words.txt"
 
 RELIEF_PHRASES = [
     ' not your fault ', ' not ur fault ', ' no worries ', ' do n\'t worry ',

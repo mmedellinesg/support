@@ -37,8 +37,8 @@ POLAR = set([
     "dare", "if", "when", "which", "who", "whom", "how"
 ])
 
-pos_filename = "../../resources/liu-positive-words.txt"
-neg_filename = "../../resources/liu-negative-words.txt"
+pos_filename = "./resources/liu-positive-words.txt"
+neg_filename = "./resources/liu-negative-words.txt"
 
 POSITIVE_WORDS = set([x.strip() for x in open(pos_filename, encoding = "ISO-8859-1").read().splitlines()])
 NEGATIVE_WORDS = set([x.strip() for x in open(neg_filename, encoding = "ISO-8859-1").read().splitlines()])

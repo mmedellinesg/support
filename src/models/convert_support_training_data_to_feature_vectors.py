@@ -7,7 +7,7 @@ from collections import *
 import re
 import pickle
 import numpy as np
-from sklearn.preprocessing import Imputer
+#from sklearn.preprocessing import Imputer
 
 def main():
 
