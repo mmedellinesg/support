@@ -13,6 +13,7 @@ from collections import defaultdict
 import datrie
 
 import gensim
+from gensim.models import KeyedVectors
 from gensim import utils
 import numpy as np
 
