@@ -1,4 +1,16 @@
 from collections import Counter
+import os
+try:
+    # Works in scripts
+    support_root = os.path.join(
+        os.path.dirname(os.path.abspath(__file__)).split('support')[0], 'support'
+    )
+except NameError:
+    # Fallback for Jupyter
+    support_root = os.path.join(
+        os.getcwd().split('support')[0], 'support'
+    )
+
 
 P_HEDGES = set([
     "think", "thought", "thinking", "almost",
@@ -37,8 +49,8 @@ POLAR = set([
     "dare", "if", "when", "which", "who", "whom", "how"
 ])
 
-pos_filename = "./resources/liu-positive-words.txt"
-neg_filename = "./resources/liu-negative-words.txt"
+pos_filename = os.path.join(support_root,"resources","liu-positive-words.txt")
+neg_filename = os.path.join(support_root,"resources","liu-negative-words.txt")
 
 POSITIVE_WORDS = set([x.strip() for x in open(pos_filename, encoding = "ISO-8859-1").read().splitlines()])
 NEGATIVE_WORDS = set([x.strip() for x in open(neg_filename, encoding = "ISO-8859-1").read().splitlines()])

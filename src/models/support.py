@@ -2,6 +2,17 @@ from collections import Counter
 from collections import defaultdict
 import re
 import spacy
+import os
+try:
+    # Works in scripts
+    support_root = os.path.join(
+        os.path.dirname(os.path.abspath(__file__)).split('support')[0], 'support'
+    )
+except NameError:
+    # Fallback for Jupyter
+    support_root = os.path.join(
+        os.getcwd().split('support')[0], 'support'
+    )
 
 en_nlp = spacy.load('en_core_web_sm')
 
@@ -99,8 +110,8 @@ COMPLIMENT = { 'like', 'appreciate', 'enjoy', 'love', 'adore', 'approve', 'dig',
 
 FIRST_PERSON_HELP_MODALS = { 'might', 'would', }
 
-pos_filename = "./resources/liu-positive-words.txt"
-neg_filename = "./resources/liu-negative-words.txt"
+pos_filename = os.path.join(support_root,"resources","liu-positive-words.txt")
+neg_filename = os.path.join(support_root,"resources","liu-negative-words.txt")
 
 RELIEF_PHRASES = [
     ' not your fault ', ' not ur fault ', ' no worries ', ' do n\'t worry ',
