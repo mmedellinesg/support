@@ -3,6 +3,17 @@ from textblob import TextBlob
 import re
 import string
 import os
+try:
+    # Works in scripts
+    support_root = os.path.join(
+        os.path.dirname(os.path.abspath(__file__)).split('support')[0], 'support'
+    )
+except NameError:
+    # Fallback for Jupyter
+    support_root = os.path.join(
+        os.getcwd().split('support')[0], 'support'
+    )
+
 
 import nltk
 from nltk.corpus import stopwords
@@ -23,7 +34,7 @@ from unidecode import unidecode
 from empath import Empath
 
 import sys
-sys.path.append('./src')
+sys.path.append(os.path.join(support_root,'src'))
 from models.politeness import get_politeness_indicators
 from models.support import get_support_indicators
 
@@ -118,9 +129,9 @@ MAX_WORD_FREQS=500000
 # Use a flag here for fast loading
 if True:
     print('Loading log-transformed Google NGram counts')
-    WORD2VEC_PATH = os.getenv("W2V_PATH", "./resources/GoogleNews-vectors-negative300.bin.gz")
+    WORD2VEC_PATH = os.getenv("W2V_PATH", os.path.join(support_root,'resources', "GoogleNews-vectors-negative300.bin.gz"))
     WORD2VEC = KeyedVectors.load_word2vec_format(WORD2VEC_PATH, binary=True)
-    ngram_count_file='./resources/google-ngram-freqs.no-pos.sorted.tsv.gz'
+    ngram_count_file=os.path.join(support_root,'resources','google-ngram-freqs.no-pos.sorted.tsv.gz')
     with gzip.open(ngram_count_file, mode='rt') as f:
         for line_no, line in enumerate(f):
             cols = line[:-1].split('\t')
@@ -137,7 +148,7 @@ WORD2VEC = None
 # still just work)
 if True:
     print('Loading word2vec data')
-    word2vec_file = os.getenv("W2V_PATH", "./resources/GoogleNews-vectors-negative300.bin.gz")
+    word2vec_file = os.getenv("W2V_PATH", os.path.join(support_root,'resources', "GoogleNews-vectors-negative300.bin.gz"))
     WORD2VEC = gensim.models.KeyedVectors.load_word2vec_format(word2vec_file, binary=True)
     print('...done loading word2vec data')
 
@@ -146,7 +157,7 @@ PHRASE_FORMALITIES_TRIE = None
 if True:
     print('Loading phrase formalities')
     # This is naacl-2015-style-scores/formality/automatic/phrase-scores
-    phrase_formalities_file = './resources/phrase-formality-scores.tsv'
+    phrase_formalities_file = os.path.join(support_root,'resources','phrase-formality-scores.tsv')
     with open(phrase_formalities_file) as f:
         for line in f:
             cols = line[:-1].split('\t')
@@ -161,7 +172,7 @@ PHRASE_CONCRETENESS = {}
 PHRASE_CONCRETENESS_TRIE = None
 if True:
     print('Loading phrase concreteness')
-    phrase_concreteness_file = './resources/AC_ratings_google3m_koeper_SiW.csv.gz'
+    phrase_concreteness_file = os.path.join(support_root,'resources','AC_ratings_google3m_koeper_SiW.csv.gz')
     with gzip.open(phrase_concreteness_file, mode='rt', encoding='utf-8') as f:
         for line_no, line in enumerate(f):
             if line_no == 0:
@@ -180,13 +191,13 @@ LIWC_RE_LEXICONS = {}
 LIWC_LEXICONS = {}
 if True:
     print('Loading lexicons')
-    curse_word_file = './resources/curse-words.txt'
+    curse_word_file = os.path.join(support_root,'resources', 'curse-words.txt')
     with open(curse_word_file) as f:
         for line in f:
             CURSE_WORDS.add(line[:-1])
     LEXICONS['CURSE_WORDS'] = CURSE_WORDS
 
-    base_lex_dir = './resources/lexicons/'
+    base_lex_dir = os.path.join(support_root,'resources','lexicons/')
     
     for fname in ['abstract.txt', 'concrete.txt', 'negative.txt', 'positive.txt', 'swearWords.txt']:
         lex_name = fname.split('.')[0]
