@@ -137,7 +137,7 @@ WORD2VEC = None
 # still just work)
 if True:
     print('Loading word2vec data')
-    word2vec_file = './resources/GoogleNews-vectors-negative300.bin.gz'
+    word2vec_file = os.getenv("W2V_PATH", "./resources/GoogleNews-vectors-negative300.bin.gz")
     WORD2VEC = gensim.models.KeyedVectors.load_word2vec_format(word2vec_file, binary=True)
     print('...done loading word2vec data')
 
