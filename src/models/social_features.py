@@ -118,7 +118,7 @@ MAX_WORD_FREQS=500000
 # Use a flag here for fast loading
 if True:
     print('Loading log-transformed Google NGram counts')
-    WORD2VEC_PATH = os.getenv("W2V_PATH", "./resources/GoogleNews-vectors-negative300.bin.gz")
+    WORD2VEC_PATH = os.getenv(W2V_PATH, "./resources/GoogleNews-vectors-negative300.bin.gz")
     WORD2VEC = KeyedVectors.load_word2vec_format(WORD2VEC_PATH, binary=True)
     ngram_count_file='./resources/google-ngram-freqs.no-pos.sorted.tsv.gz'
     with gzip.open(ngram_count_file, mode='rt') as f:
